@@ -50,7 +50,7 @@ Built as a replacement for premium tools ($6.99+). SFPoint is free, open-source,
 
 ```powershell
 # Clone
-git clone https://github.com/0swy/sfpoint.win.git
+git clone https://github.com/Johann-vn/sfpoint.win.git
 cd sfpoint.win
 
 # Python environment
@@ -162,5 +162,5 @@ MIT License. Do whatever you want with it.
 
 <p align="center">
   Built with Claude Opus 4.6 in a single session.<br>
-  <sub>From <a href="https://github.com/0swy">0swy</a> — <strong>SF</strong>Point (Windows Fork)</sub>
+  <sub>From <a href="https://github.com/Johann-vn">Johann-vn</a> — <strong>SF</strong>Point (Windows Fork)</sub>
 </p>
