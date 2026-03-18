@@ -1,15 +1,22 @@
 """Mini floating toolbar — pill-style indicator for current tool and color.
 
-Reuses SFlow's PyObjC floating window pattern.
-Ctrl+H toggles visibility.
+Reuses SFlow's floating window pattern.
+Alt+H toggles visibility.
 """
 
-from ctypes import c_void_p
-import AppKit
-import objc
+import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QMenu, QWidgetAction, QHBoxLayout, QLabel
 from PyQt6.QtCore import Qt, QRectF, QPointF, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPainterPath, QPen, QPixmap, QFont, QAction, QIcon
+
+if sys.platform == "darwin":
+    try:
+        from ctypes import c_void_p
+        import AppKit
+        import objc
+    except ImportError:
+        pass
+
 from config import (
     TOOLBAR_HEIGHT, TOOLBAR_WIDTH, TOOLBAR_OPACITY, TOOLBAR_CORNER_RADIUS,
     TOOLBAR_MARGIN_BOTTOM, TOOLBAR_ICON_SIZE, LOGO_PATH, LOGO_SIZE,
@@ -32,12 +39,12 @@ TOOL_LABELS = {
 }
 
 TOOL_SHORTCUT_LABELS = {
-    TOOL_ARROW: "\u2325A",
-    TOOL_RECT: "\u2325R",
-    TOOL_CIRCLE: "\u2325C",
-    TOOL_FREEHAND: "\u2325F",
-    TOOL_TEXT: "\u2325T",
-    TOOL_LASER: "\u2325P",
+    TOOL_ARROW: "Alt+A",
+    TOOL_RECT: "Alt+R",
+    TOOL_CIRCLE: "Alt+C",
+    TOOL_FREEHAND: "Alt+F",
+    TOOL_TEXT: "Alt+T",
+    TOOL_LASER: "Alt+P",
     TOOL_HIGHLIGHTER: "",
 }
 
@@ -49,7 +56,6 @@ QMenu {
     border-radius: 8px;
     padding: 4px 0;
     color: #e0e0e0;
-    font-family: ".AppleSystemUIFont";
     font-size: 12px;
 }
 QMenu::item {
@@ -129,10 +135,11 @@ class ToolbarWidget(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        try:
-            self._setup_native_macos()
-        except Exception as e:
-            print(f"Warning: toolbar native setup failed: {e}")
+        if sys.platform == "darwin":
+            try:
+                self._setup_native_macos()
+            except Exception as e:
+                print(f"Warning: toolbar native setup failed: {e}")
 
     def _setup_native_macos(self):
         ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
@@ -167,7 +174,7 @@ class ToolbarWidget(QWidget):
         self.update()
 
     def toggle_visibility(self):
-        """Ctrl+H toggle."""
+        """Alt+H toggle."""
         if self.isVisible():
             self.hide()
         else:
@@ -222,7 +229,8 @@ class ToolbarWidget(QWidget):
         x_cursor += TOOLBAR_ICON_SIZE + 6
 
         # Tool label + shortcut
-        font = QFont(".AppleSystemUIFont", 11)
+        font = QFont()
+        font.setPointSize(11)
         font.setWeight(QFont.Weight.Medium)
         painter.setFont(font)
         label_color = QColor(255, 255, 255, 200 if self._active else 100)
@@ -285,7 +293,8 @@ class ToolbarWidget(QWidget):
             painter.drawPath(path)
 
         elif tool == TOOL_TEXT:
-            font = QFont(".AppleSystemUIFont", int(s * 2.2))
+            font = QFont()
+            font.setPointSize(int(s * 2.2))
             font.setBold(True)
             painter.setFont(font)
             painter.setPen(color)
@@ -348,15 +357,15 @@ class ToolbarWidget(QWidget):
         menu.addSeparator()
 
         # --- Actions ---
-        undo_action = menu.addAction("  Undo          \u2318Z")
+        undo_action = menu.addAction("  Undo          Ctrl+Z")
         undo_action.triggered.connect(self.undo_requested.emit)
 
-        clear_action = menu.addAction("  Clear All    \u2318\u21e7Z")
+        clear_action = menu.addAction("  Clear All    Ctrl+Shift+Z")
         clear_action.triggered.connect(self.clear_requested.emit)
 
         menu.addSeparator()
 
-        settings_action = menu.addAction("  Settings      \u2325S")
+        settings_action = menu.addAction("  Settings      Alt+S")
         settings_action.triggered.connect(self.settings_requested.emit)
 
         menu.addSeparator()

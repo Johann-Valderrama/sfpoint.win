@@ -1,4 +1,3 @@
 PyQt6
 pynput
-pyobjc-framework-Cocoa
 numpy

@@ -1,9 +1,9 @@
 """SFPoint — Screen Annotation Tool.
 
-Option+key toggles annotation tools on/off.
-Option+A=arrow, Option+R=rect, Option+C=circle, Option+F=freehand,
-Option+T=text, Option+P=pointer, Option+H=hide toolbar, Option+S=settings.
-Esc=deactivate, Cmd+Z=undo, Cmd+Shift+Z=clear all.
+Alt+key toggles annotation tools on/off.
+Alt+A=arrow, Alt+R=rect, Alt+C=circle, Alt+F=freehand,
+Alt+T=text, Alt+P=pointer, Alt+H=hide toolbar, Alt+S=settings.
+Esc=deactivate, Ctrl+Z=undo, Ctrl+Shift+Z=clear all.
 """
 
 import os
@@ -22,11 +22,13 @@ from ui.settings import SettingsPanel
 
 def _ensure_accessibility() -> bool:
     """Prompt macOS to grant Accessibility if not trusted. Returns True if already trusted."""
-    try:
-        from ApplicationServices import AXIsProcessTrustedWithOptions
-        return AXIsProcessTrustedWithOptions({"AXTrustedCheckOptionPrompt": True})
-    except Exception:
-        return True
+    if sys.platform == "darwin":
+        try:
+            from ApplicationServices import AXIsProcessTrustedWithOptions
+            return AXIsProcessTrustedWithOptions({"AXTrustedCheckOptionPrompt": True})
+        except Exception:
+            return True
+    return True
 
 
 # --- Launch Agent ---
@@ -35,25 +37,32 @@ _LAUNCH_AGENT_PATH = os.path.expanduser(f"~/Library/LaunchAgents/{_BUNDLE_ID}.pl
 
 
 def _is_launch_at_login() -> bool:
-    return os.path.exists(_LAUNCH_AGENT_PATH)
+    if sys.platform == "darwin":
+        return os.path.exists(_LAUNCH_AGENT_PATH)
+    # TODO: Windows registry startup check
+    return False
 
 
 def _set_launch_at_login(enabled: bool):
-    if enabled:
-        app_path = "/Applications/SFPoint.app" if IS_BUNDLE else ""
-        if not app_path or not os.path.exists(app_path):
-            return
-        plist = {
-            "Label": _BUNDLE_ID,
-            "ProgramArguments": ["open", "-a", app_path],
-            "RunAtLoad": True,
-        }
-        os.makedirs(os.path.dirname(_LAUNCH_AGENT_PATH), exist_ok=True)
-        with open(_LAUNCH_AGENT_PATH, "wb") as f:
-            plistlib.dump(plist, f)
+    if sys.platform == "darwin":
+        if enabled:
+            app_path = "/Applications/SFPoint.app" if IS_BUNDLE else ""
+            if not app_path or not os.path.exists(app_path):
+                return
+            plist = {
+                "Label": _BUNDLE_ID,
+                "ProgramArguments": ["open", "-a", app_path],
+                "RunAtLoad": True,
+            }
+            os.makedirs(os.path.dirname(_LAUNCH_AGENT_PATH), exist_ok=True)
+            with open(_LAUNCH_AGENT_PATH, "wb") as f:
+                plistlib.dump(plist, f)
+        else:
+            if os.path.exists(_LAUNCH_AGENT_PATH):
+                os.remove(_LAUNCH_AGENT_PATH)
     else:
-        if os.path.exists(_LAUNCH_AGENT_PATH):
-            os.remove(_LAUNCH_AGENT_PATH)
+        # TODO: Windows registry startup implementation
+        pass
 
 
 def main():
@@ -67,7 +76,7 @@ def main():
     settings = SettingsPanel()
     hotkey = HotkeyListener()
 
-    # --- System Tray (menu bar icon) ---
+    # --- System Tray (menu bar icon / tray icon) ---
     tray = QSystemTrayIcon()
     tray_icon = QIcon(QPixmap(LOGO_PATH))
     tray.setIcon(tray_icon)
@@ -78,7 +87,9 @@ def main():
 
     tray_menu.addSeparator()
 
-    login_action = tray_menu.addAction("Start with macOS")
+    # Adjust text based on OS
+    os_name = "macOS" if sys.platform == "darwin" else "Windows"
+    login_action = tray_menu.addAction(f"Start with {os_name}")
     login_action.setCheckable(True)
     login_action.setChecked(_is_launch_at_login())
     login_action.triggered.connect(lambda checked: _set_launch_at_login(checked))
@@ -159,17 +170,18 @@ def main():
 
     # --- Hide from Dock (menu bar only) ---
     # MUST be set AFTER all windows are shown
-    try:
-        import AppKit
-        AppKit.NSApp.setActivationPolicy_(AppKit.NSApplicationActivationPolicyAccessory)
-    except Exception:
-        pass
+    if sys.platform == "darwin":
+        try:
+            import AppKit
+            AppKit.NSApp.setActivationPolicy_(AppKit.NSApplicationActivationPolicyAccessory)
+        except Exception:
+            pass
 
     print("SFPoint running.")
-    print("  \u2325A=arrow  \u2325R=rect  \u2325C=circle  \u2325F=freehand")
-    print("  \u2325T=text   \u2325P=pointer")
-    print("  \u2325H=hide toolbar  \u2325S=settings")
-    print("  \u2318Z=undo  \u2318\u21e7Z=clear  Esc=deactivate  Right-click=menu")
+    print("  Alt+A=arrow  Alt+R=rect  Alt+C=circle  Alt+F=freehand")
+    print("  Alt+T=text   Alt+P=pointer")
+    print("  Alt+H=hide toolbar  Alt+S=settings")
+    print("  Ctrl+Z=undo  Ctrl+Shift+Z=clear  Esc=deactivate  Right-click=menu")
 
     exit_code = app.exec()
     hotkey.stop()

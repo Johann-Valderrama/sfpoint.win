@@ -1,9 +1,9 @@
 """Global hotkey listener for screen annotation.
 
-Toggle-based: Option+key toggles tools on/off.
-Option+A=arrow, Option+R=rect, Option+C=circle, Option+F=freehand,
-Option+T=text, Option+P=laser pointer, Option+H=hide toolbar,
-Option+S=settings, Esc=deactivate.
+Toggle-based: Alt+key toggles tools on/off.
+Alt+A=arrow, Alt+R=rect, Alt+C=circle, Alt+F=freehand,
+Alt+T=text, Alt+P=laser pointer, Alt+H=hide toolbar,
+Alt+S=settings, Esc=deactivate.
 
 Uses pynput with Qt signals (QueuedConnection required).
 """
@@ -14,15 +14,15 @@ from config import TOOL_SHORTCUTS, TOOL_LASER, SHORTCUT_HIDE_TOOLBAR, SHORTCUT_S
 
 
 class HotkeyListener(QObject):
-    """Toggle-based Option+key hotkey listener.
+    """Toggle-based Alt+key hotkey listener.
 
     Signals:
-        tool_toggled(tool: str) — Option+tool key pressed (toggle on/off)
+        tool_toggled(tool: str) — Alt+tool key pressed (toggle on/off)
         deactivated() — Esc pressed or tool toggled off
-        hide_toolbar() — Option+H pressed
-        open_settings() — Option+S pressed
-        undo_requested() — Cmd+Z pressed
-        clear_requested() — Cmd+Shift+Z pressed
+        hide_toolbar() — Alt+H pressed
+        open_settings() — Alt+S pressed
+        undo_requested() — Ctrl+Z pressed
+        clear_requested() — Ctrl+Shift+Z pressed
     """
 
     tool_toggled = pyqtSignal(str)
@@ -35,8 +35,8 @@ class HotkeyListener(QObject):
 
     def __init__(self):
         super().__init__()
-        self._option_held = False
-        self._cmd_held = False
+        self._alt_held = False
+        self._ctrl_held = False
         self._shift_held = False
         self._active_tool: str | None = None
         self._laser_on = False
@@ -62,9 +62,9 @@ class HotkeyListener(QObject):
     def _on_press(self, key):
         # Track modifiers
         if key in (keyboard.Key.alt_l, keyboard.Key.alt_r, keyboard.Key.alt):
-            self._option_held = True
-        if key in (keyboard.Key.cmd, keyboard.Key.cmd_l, keyboard.Key.cmd_r):
-            self._cmd_held = True
+            self._alt_held = True
+        if key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
+            self._ctrl_held = True
         if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
             self._shift_held = True
 
@@ -75,35 +75,25 @@ class HotkeyListener(QObject):
                 self.deactivated.emit()
             return
 
-        # Get char — Option on macOS produces special chars, so also check vk
         char = None
         try:
             char = key.char
         except AttributeError:
             pass
 
-        # On macOS, Option+key produces unicode chars (å, ®, ©, etc.)
-        # Use vk (virtual key code) to get the original letter
-        if self._option_held and hasattr(key, 'vk') and key.vk is not None:
+        # Windows VK codes for letters A-Z are 65-90
+        if not char and hasattr(key, 'vk') and key.vk is not None:
             vk = key.vk
-            # macOS virtual key codes for letters
-            vk_map = {
-                0: 'a', 11: 'b', 8: 'c', 2: 'd', 14: 'e', 3: 'f',
-                5: 'g', 4: 'h', 34: 'i', 38: 'j', 40: 'k', 37: 'l',
-                46: 'm', 45: 'n', 31: 'o', 35: 'p', 12: 'q', 15: 'r',
-                1: 's', 17: 't', 32: 'u', 9: 'v', 13: 'w', 7: 'x',
-                16: 'y', 6: 'z',
-            }
-            if vk in vk_map:
-                char = vk_map[vk]
+            if 65 <= vk <= 90:
+                char = chr(vk).lower()
 
         if not char:
             return
 
         char_lower = char.lower()
 
-        # Cmd+Z / Cmd+Shift+Z (undo/clear) — no Option required
-        if self._cmd_held and not self._option_held:
+        # Ctrl+Z / Ctrl+Shift+Z (undo/clear) — no Alt required
+        if self._ctrl_held and not self._alt_held:
             if char_lower == "z":
                 if self._shift_held:
                     self.clear_requested.emit()
@@ -111,16 +101,16 @@ class HotkeyListener(QObject):
                     self.undo_requested.emit()
                 return
 
-        # Option+key shortcuts (toggle-based)
-        if not self._option_held:
+        # Alt+key shortcuts (toggle-based)
+        if not self._alt_held:
             return
 
-        # Option+H = hide/show toolbar
+        # Alt+H = hide/show toolbar
         if char_lower == SHORTCUT_HIDE_TOOLBAR:
             self.hide_toolbar.emit()
             return
 
-        # Option+S = settings
+        # Alt+S = settings
         if char_lower == SHORTCUT_SETTINGS:
             self.open_settings.emit()
             return
@@ -141,8 +131,8 @@ class HotkeyListener(QObject):
 
     def _on_release(self, key):
         if key in (keyboard.Key.alt_l, keyboard.Key.alt_r, keyboard.Key.alt):
-            self._option_held = False
-        if key in (keyboard.Key.cmd, keyboard.Key.cmd_l, keyboard.Key.cmd_r):
-            self._cmd_held = False
+            self._alt_held = False
+        if key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
+            self._ctrl_held = False
         if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
             self._shift_held = False

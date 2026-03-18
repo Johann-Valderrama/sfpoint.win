@@ -1,11 +1,18 @@
 """Settings panel — shows shortcuts, allows rebinding."""
 
-from ctypes import c_void_p
-import AppKit
-import objc
+import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
+
+if sys.platform == "darwin":
+    try:
+        from ctypes import c_void_p
+        import AppKit
+        import objc
+    except ImportError:
+        pass
+
 from config import (
     TOOL_SHORTCUTS, SHORTCUT_HIDE_TOOLBAR, SHORTCUT_SETTINGS,
     TOOL_ARROW, TOOL_RECT, TOOL_CIRCLE, TOOL_FREEHAND,
@@ -31,7 +38,7 @@ class ShortcutButton(QPushButton):
     key_captured = pyqtSignal(str, str)  # (tool, new_key)
 
     def __init__(self, tool: str, current_key: str):
-        super().__init__(f"Ctrl + {current_key.upper()}")
+        super().__init__(f"Alt + {current_key.upper()}")
         self._tool = tool
         self._current_key = current_key
         self._listening = False
@@ -84,12 +91,12 @@ class ShortcutButton(QPushButton):
         if text and text.isalpha():
             new_key = text.lower()
             self._current_key = new_key
-            self.setText(f"Ctrl + {new_key.upper()}")
+            self.setText(f"Alt + {new_key.upper()}")
             self._listening = False
             self.setStyleSheet(self._normal_style())
             self.key_captured.emit(self._tool, new_key)
         elif event.key() == Qt.Key.Key_Escape:
-            self.setText(f"Ctrl + {self._current_key.upper()}")
+            self.setText(f"Alt + {self._current_key.upper()}")
             self._listening = False
             self.setStyleSheet(self._normal_style())
 
@@ -125,15 +132,16 @@ class SettingsPanel(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        try:
-            ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
-            ns_window = ns_view.window()
-            ns_window.setLevel_(AppKit.NSFloatingWindowLevel + 2)
-            ns_window.setStyleMask_(
-                ns_window.styleMask() | AppKit.NSWindowStyleMaskNonactivatingPanel
-            )
-        except Exception:
-            pass
+        if sys.platform == "darwin":
+            try:
+                ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
+                ns_window = ns_view.window()
+                ns_window.setLevel_(AppKit.NSFloatingWindowLevel + 2)
+                ns_window.setStyleMask_(
+                    ns_window.styleMask() | AppKit.NSWindowStyleMaskNonactivatingPanel
+                )
+            except Exception:
+                pass
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -181,8 +189,8 @@ class SettingsPanel(QWidget):
         fixed_label.setStyleSheet("color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600;")
         layout.addWidget(fixed_label)
 
-        for name, shortcut in [("Hide Toolbar", "Ctrl+H"), ("Settings", "Ctrl+S"),
-                                ("Undo", "Cmd+Z"), ("Clear All", "Cmd+Shift+Z"), ("Deactivate", "Esc")]:
+        for name, shortcut in [("Hide Toolbar", "Alt+H"), ("Settings", "Alt+S"),
+                                ("Undo", "Ctrl+Z"), ("Clear All", "Ctrl+Shift+Z"), ("Deactivate", "Esc")]:
             row = QHBoxLayout()
             lbl = QLabel(name)
             lbl.setStyleSheet("color: rgba(255,255,255,0.5); font-size: 11px;")
@@ -226,7 +234,7 @@ class SettingsPanel(QWidget):
             del self._shortcuts[new_key]
             # Update conflicting button to show "?"
             if conflicting_tool in self._buttons:
-                self._buttons[conflicting_tool].setText("Ctrl + ?")
+                self._buttons[conflicting_tool].setText("Alt + ?")
         # Assign
         self._shortcuts[new_key] = tool
         save_shortcuts(self._shortcuts)

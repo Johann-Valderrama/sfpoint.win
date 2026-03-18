@@ -3,16 +3,12 @@
 Architecture: CanvasManager (QObject) owns all state and creates one
 ScreenOverlay (QWidget) per physical monitor.  Coordinates are stored
 in GLOBAL screen space; each overlay translates its QPainter so that
-global coords map to local widget pixels.  This guarantees that every
-monitor receives its own native macOS NSWindow and mouse‐event routing.
+global coords map to local widget pixels.
 """
 
+import sys
 import ctypes
-import ctypes.util
 import time
-from ctypes import c_void_p
-import AppKit
-import objc
 from pynput import mouse as pynput_mouse
 from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6.QtCore import Qt, QTimer, QPointF, QObject, pyqtSignal, QPoint, QRectF
@@ -26,26 +22,43 @@ from config import (
     TEXT_FONT_SIZE, RIPPLE_DURATION,
 )
 
-# --- Core Graphics cursor control (system-wide) ---
-_cg_path = ctypes.util.find_library("CoreGraphics")
-if not _cg_path:
-    _cg_path = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"
-_cg = ctypes.cdll.LoadLibrary(_cg_path)
-_cg.CGMainDisplayID.argtypes = []
-_cg.CGMainDisplayID.restype = ctypes.c_uint32
-_cg.CGDisplayHideCursor.argtypes = [ctypes.c_uint32]
-_cg.CGDisplayHideCursor.restype = ctypes.c_int32
-_cg.CGDisplayShowCursor.argtypes = [ctypes.c_uint32]
-_cg.CGDisplayShowCursor.restype = ctypes.c_int32
-_CG_DISPLAY = _cg.CGMainDisplayID()
+if sys.platform == "darwin":
+    try:
+        from ctypes import c_void_p
+        import AppKit
+        import objc
+        import ctypes.util
+        _cg_path = ctypes.util.find_library("CoreGraphics")
+        if not _cg_path:
+            _cg_path = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"
+        _cg = ctypes.cdll.LoadLibrary(_cg_path)
+        _cg.CGMainDisplayID.argtypes = []
+        _cg.CGMainDisplayID.restype = ctypes.c_uint32
+        _cg.CGDisplayHideCursor.argtypes = [ctypes.c_uint32]
+        _cg.CGDisplayHideCursor.restype = ctypes.c_int32
+        _cg.CGDisplayShowCursor.argtypes = [ctypes.c_uint32]
+        _cg.CGDisplayShowCursor.restype = ctypes.c_int32
+        _CG_DISPLAY = _cg.CGMainDisplayID()
+    except Exception:
+        pass
 
 
 def _cg_hide_cursor():
-    _cg.CGDisplayHideCursor(_CG_DISPLAY)
+    if sys.platform == "darwin":
+        try:
+            _cg.CGDisplayHideCursor(_CG_DISPLAY)
+        except Exception:
+            pass
+    # On Windows, global cursor hiding is complex and often unwanted.
+    # We will rely on Qt BlankCursor where possible.
 
 
 def _cg_show_cursor():
-    _cg.CGDisplayShowCursor(_CG_DISPLAY)
+    if sys.platform == "darwin":
+        try:
+            _cg.CGDisplayShowCursor(_CG_DISPLAY)
+        except Exception:
+            pass
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -70,14 +83,15 @@ class ScreenOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setGeometry(screen.geometry())
 
-    # --- native macOS helpers ---
+    # --- native helpers ---
 
     def showEvent(self, event):
         super().showEvent(event)
-        try:
-            self._setup_native_macos()
-        except Exception as e:
-            print(f"Warning: native macOS setup failed on {self._screen.name()}: {e}")
+        if sys.platform == "darwin":
+            try:
+                self._setup_native_macos()
+            except Exception as e:
+                print(f"Warning: native macOS setup failed on {self._screen.name()}: {e}")
         self._set_ignores_mouse(True)
 
     def _setup_native_macos(self):
@@ -98,18 +112,25 @@ class ScreenOverlay(QWidget):
         ns_window.setHasShadow_(False)
 
     def _set_ignores_mouse(self, ignore: bool):
-        try:
-            ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
-            ns_view.window().setIgnoresMouseEvents_(ignore)
-        except Exception:
-            pass
+        if sys.platform == "darwin":
+            try:
+                ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
+                ns_view.window().setIgnoresMouseEvents_(ignore)
+            except Exception:
+                pass
+        else:
+            # Cross-platform Qt way (works well on Windows)
+            self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, ignore)
 
     def _bring_to_front(self):
-        try:
-            ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
-            ns_view.window().orderFrontRegardless()
-        except Exception:
-            pass
+        if sys.platform == "darwin":
+            try:
+                ns_view = objc.objc_object(c_void_p=c_void_p(self.winId().__int__()))
+                ns_view.window().orderFrontRegardless()
+            except Exception:
+                pass
+        else:
+            self.raise_()
 
     def _grab_focus(self):
         self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, False)
