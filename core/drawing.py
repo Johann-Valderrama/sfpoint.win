@@ -176,11 +176,13 @@ class ShapeRenderer:
         painter.drawPath(path)
 
     @staticmethod
-    def draw_laser(painter: QPainter, pos: tuple, trail: list):
+    def draw_laser(painter: QPainter, pos: tuple, trail: list, color: QColor = None):
         """Draw neon laser pointer with bloom glow and luminous trail."""
         painter.setPen(Qt.PenStyle.NoPen)
 
-        lr, lg, lb = LASER_COLOR.red(), LASER_COLOR.green(), LASER_COLOR.blue()
+        if color is None:
+            color = LASER_COLOR
+        lr, lg, lb = color.red(), color.green(), color.blue()
 
         # Trail width matches dot diameter for a thick, bold laser trail
         # FlatCap with overlapping segments — short overlap hides flat ends
@@ -208,12 +210,13 @@ class ShapeRenderer:
                 painter.setPen(pen)
                 painter.drawLine(QPointF(*trail[i - 1]), QPointF(*trail[i]))
 
-            # Pass 3: Bright core line (hot white-ambar center)
+            # Pass 3: Bright core line (hot white-tinted center)
             for i in range(1, n):
                 t = (i + 1) / n
-                r = lr + int((255 - lr) * t * 0.6)
-                g = lg + int((240 - lg) * t * 0.4)
-                b = lb + int((180 - lb) * t * 0.3)
+                # Pull towards white for the "hot" core
+                r = lr + int((255 - lr) * t * 0.7)
+                g = lg + int((255 - lg) * t * 0.6)
+                b = lb + int((255 - lb) * t * 0.5)
                 alpha = int(t * t * 200)
                 width = t * dot_diam * 0.6
                 pen = QPen(QColor(r, g, b, alpha), width,
@@ -232,16 +235,15 @@ class ShapeRenderer:
 
         # Use drawRect instead of drawEllipse — the radial gradient creates
         # the circular shape, but a rect has no curved edge to anti-alias.
-        # This eliminates the dark fringe artifact entirely.
         full_r = LASER_GLOW_RADIUS * 2.5
         dot_stop = LASER_DOT_RADIUS / full_r
         glow_stop = LASER_GLOW_RADIUS / full_r
         bloom_stop = (LASER_GLOW_RADIUS * 2.0) / full_r
 
         grad = QRadialGradient(center, full_r)
-        grad.setColorAt(0.0, QColor(255, 250, 220, 255))
-        grad.setColorAt(dot_stop * 0.4, QColor(255, 220, 140, 240))
-        grad.setColorAt(dot_stop * 0.7, QColor(lr, lg, lb, 210))
+        # Hot core
+        grad.setColorAt(0.0, QColor(255, 255, 255, 255))
+        grad.setColorAt(dot_stop * 0.5, QColor(min(255, lr + 60), min(255, lg + 50), min(255, lb + 40), 240))
         grad.setColorAt(dot_stop, QColor(lr, lg, lb, 160))
         grad.setColorAt(glow_stop * 0.6, QColor(lr, lg, lb, 60))
         grad.setColorAt(glow_stop, QColor(lr, lg, lb, 25))
@@ -253,11 +255,15 @@ class ShapeRenderer:
         painter.drawRect(QRectF(px - full_r, py - full_r, full_r * 2, full_r * 2))
 
     @staticmethod
-    def draw_ripple(painter: QPainter, pos: tuple, progress: float):
-        """Draw bold expanding morado shockwave on click. progress: 0..1."""
+    def draw_ripple(painter: QPainter, pos: tuple, progress: float, color: QColor = None):
+        """Draw bold expanding shockwave on click. progress: 0..1."""
         if not pos or progress >= 1.0:
             return
-        mr, mg, mb = COLOR_MORADO.red(), COLOR_MORADO.green(), COLOR_MORADO.blue()
+        
+        if color is None:
+            color = COLOR_MORADO
+        
+        mr, mg, mb = color.red(), color.green(), color.blue()
         px, py = pos
         center = QPointF(px, py)
 
@@ -278,7 +284,7 @@ class ShapeRenderer:
             painter.setBrush(grad_bloom)
             painter.drawEllipse(center, bloom_r, bloom_r)
 
-        # Layer 2: Dense morado fill — the main shockwave body
+        # Layer 2: Dense fill — the main shockwave body
         fill_alpha = int(160 * fade ** 1.8)
         if fill_alpha > 2:
             grad = QRadialGradient(center, radius)
@@ -297,7 +303,7 @@ class ShapeRenderer:
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawEllipse(center, radius, radius)
 
-        # Layer 4: Hot white-morado core flash (visible at start, fades fast)
+        # Layer 4: Hot white core flash (visible at start, fades fast)
         if progress < 0.4:
             core_fade = 1.0 - (progress / 0.4)
             core_alpha = int(200 * core_fade ** 2)

@@ -75,17 +75,16 @@ class HotkeyListener(QObject):
                 self.deactivated.emit()
             return
 
+        # Detectar el carácter usando el código de tecla virtual (más robusto en Windows para Ctrl+Z, etc.)
         char = None
-        try:
-            char = key.char
-        except AttributeError:
-            pass
-
-        # Windows VK codes for letters A-Z are 65-90
-        if not char and hasattr(key, 'vk') and key.vk is not None:
-            vk = key.vk
-            if 65 <= vk <= 90:
-                char = chr(vk).lower()
+        vk = getattr(key, 'vk', None)
+        if vk is not None and 65 <= vk <= 90:
+            char = chr(vk).lower()
+        else:
+            try:
+                char = key.char
+            except AttributeError:
+                pass
 
         if not char:
             return

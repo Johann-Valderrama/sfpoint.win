@@ -221,8 +221,6 @@ class ToolbarWidget(QWidget):
         icon_cx = x_cursor + TOOLBAR_ICON_SIZE / 2
         icon_cy = h / 2.0
         color = QColor(COLOR_PALETTE[self._color_index])
-        if self._tool == TOOL_LASER:
-            color = QColor(LASER_COLOR)
         if not self._active:
             color.setAlpha(100)
         self._draw_tool_icon(painter, self._tool, icon_cx, icon_cy, color)
@@ -250,7 +248,7 @@ class ToolbarWidget(QWidget):
         dot_r = 5.0
         dot_cx = w - 16.0
         dot_cy = h / 2.0
-        dot_color = QColor(LASER_COLOR) if self._tool == TOOL_LASER else QColor(COLOR_PALETTE[self._color_index])
+        dot_color = QColor(COLOR_PALETTE[self._color_index])
         painter.setBrush(dot_color)
         painter.drawEllipse(QPointF(dot_cx, dot_cy), dot_r, dot_r)
 
@@ -302,14 +300,14 @@ class ToolbarWidget(QWidget):
                              Qt.AlignmentFlag.AlignCenter, "T")
 
         elif tool == TOOL_LASER:
-            # Ambar laser dot icon
+            # Dynamic color laser dot icon
             painter.setPen(Qt.PenStyle.NoPen)
-            ambar = QColor(LASER_COLOR)
-            ambar.setAlpha(180)
-            painter.setBrush(ambar)
+            ic = QColor(color)
+            ic.setAlpha(180)
+            painter.setBrush(ic)
             painter.drawEllipse(QPointF(cx, cy), s * 0.5, s * 0.5)
-            ambar.setAlpha(60)
-            painter.setBrush(ambar)
+            ic.setAlpha(60)
+            painter.setBrush(ic)
             painter.drawEllipse(QPointF(cx, cy), s * 0.8, s * 0.8)
 
         elif tool == TOOL_HIGHLIGHTER:

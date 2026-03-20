@@ -191,14 +191,16 @@ class ScreenOverlay(QWidget):
 
         # Laser
         if mgr._laser_active:
-            ShapeRenderer.draw_laser(painter, mgr._laser_pos, mgr._laser_trail)
+            color = COLOR_PALETTE[mgr._color_index]
+            ShapeRenderer.draw_laser(painter, mgr._laser_pos, mgr._laser_trail, color)
 
         # Ripples
         now = time.time()
         for ripple in mgr._ripples:
             progress = (now - ripple["start_time"]) / RIPPLE_DURATION
             if 0.0 <= progress < 1.0:
-                ShapeRenderer.draw_ripple(painter, ripple["pos"], progress)
+                r_color = COLOR_PALETTE[ripple.get("color_index", DEFAULT_COLOR_INDEX)]
+                ShapeRenderer.draw_ripple(painter, ripple["pos"], progress, r_color)
 
         # Text cursor
         if mgr._text_mode and mgr._text_pos:
@@ -241,7 +243,7 @@ class CanvasManager(QObject):
     tool_changed = pyqtSignal(str)
     color_changed = pyqtSignal(int)
     context_menu_requested = pyqtSignal(object)
-    _ripple_signal = pyqtSignal(float, float)
+    _ripple_signal = pyqtSignal(float, float, int)
 
     def __init__(self):
         super().__init__()
@@ -559,12 +561,16 @@ class CanvasManager(QObject):
             if self._cursor_hidden:
                 _cg.CGDisplayHideCursor(_CG_DISPLAY)
             if pressed:
-                self._ripple_signal.emit(float(x), float(y))
+                self._ripple_signal.emit(float(x), float(y), self._color_index)
         except Exception:
             pass
 
-    def _add_ripple(self, x: float, y: float):
-        self._ripples.append({"pos": (x, y), "start_time": time.time()})
+    def _add_ripple(self, x: float, y: float, color_idx: int):
+        self._ripples.append({
+            "pos": (x, y),
+            "start_time": time.time(),
+            "color_index": color_idx
+        })
 
     # --- fade ---
 
