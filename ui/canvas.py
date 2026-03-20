@@ -22,44 +22,6 @@ from config import (
     TEXT_FONT_SIZE, RIPPLE_DURATION,
 )
 
-if sys.platform == "darwin":
-    try:
-        from ctypes import c_void_p
-        import AppKit
-        import objc
-        import ctypes.util
-        _cg_path = ctypes.util.find_library("CoreGraphics")
-        if not _cg_path:
-            _cg_path = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"
-        _cg = ctypes.cdll.LoadLibrary(_cg_path)
-        _cg.CGMainDisplayID.argtypes = []
-        _cg.CGMainDisplayID.restype = ctypes.c_uint32
-        _cg.CGDisplayHideCursor.argtypes = [ctypes.c_uint32]
-        _cg.CGDisplayHideCursor.restype = ctypes.c_int32
-        _cg.CGDisplayShowCursor.argtypes = [ctypes.c_uint32]
-        _cg.CGDisplayShowCursor.restype = ctypes.c_int32
-        _CG_DISPLAY = _cg.CGMainDisplayID()
-    except Exception:
-        pass
-
-
-def _cg_hide_cursor():
-    if sys.platform == "darwin":
-        try:
-            _cg.CGDisplayHideCursor(_CG_DISPLAY)
-        except Exception:
-            pass
-    # On Windows, global cursor hiding is complex and often unwanted.
-    # We will rely on Qt BlankCursor where possible.
-
-
-def _cg_show_cursor():
-    if sys.platform == "darwin":
-        try:
-            _cg.CGDisplayShowCursor(_CG_DISPLAY)
-        except Exception:
-            pass
-
 
 # ─────────────────────────────────────────────────────────────────────
 # ScreenOverlay — one transparent fullscreen widget per physical screen
@@ -118,8 +80,18 @@ class ScreenOverlay(QWidget):
                 ns_view.window().setIgnoresMouseEvents_(ignore)
             except Exception:
                 pass
+        elif sys.platform == "win32":
+            hwnd = int(self.winId())
+            GWL_EXSTYLE = -20
+            WS_EX_TRANSPARENT = 0x00000020
+            WS_EX_LAYERED = 0x00080000
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            if ignore:
+                style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
+            else:
+                style &= ~WS_EX_TRANSPARENT
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
         else:
-            # Cross-platform Qt way (works well on Windows)
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, ignore)
 
     def _bring_to_front(self):
@@ -205,7 +177,7 @@ class ScreenOverlay(QWidget):
         # Text cursor
         if mgr._text_mode and mgr._text_pos:
             color = COLOR_PALETTE[mgr._color_index]
-            font = QFont(".AppleSystemUIFont", TEXT_FONT_SIZE)
+            font = QFont("Segoe UI" if sys.platform == "win32" else ".AppleSystemUIFont", TEXT_FONT_SIZE)
             font.setBold(True)
             painter.setFont(font)
             fm = painter.fontMetrics()
@@ -348,7 +320,6 @@ class CanvasManager(QObject):
                 self._mouse_listener.daemon = True
                 self._mouse_listener.start()
             self._cursor_hidden = True
-            _cg_hide_cursor()
         else:
             self._cursor_hidden = False
             self._laser_poll_timer.stop()
@@ -357,8 +328,6 @@ class CanvasManager(QObject):
             if self._mouse_listener:
                 self._mouse_listener.stop()
                 self._mouse_listener = None
-            for _ in range(500):
-                _cg_show_cursor()
             if not self._active:
                 self._set_all_ignores_mouse(True)
         self._update_all()
@@ -532,9 +501,6 @@ class CanvasManager(QObject):
     # --- laser polling (global coords) ---
 
     def _poll_laser_position(self):
-        if self._cursor_hidden:
-            _cg_hide_cursor()
-
         pos = QCursor.pos()
         xy = (pos.x(), pos.y())
 
@@ -550,16 +516,10 @@ class CanvasManager(QObject):
         self._update_all()
 
     def _on_global_move(self, x: int, y: int):
-        try:
-            if self._cursor_hidden:
-                _cg.CGDisplayHideCursor(_CG_DISPLAY)
-        except Exception:
-            pass
+        pass
 
     def _on_global_click(self, x: int, y: int, button, pressed: bool):
         try:
-            if self._cursor_hidden:
-                _cg.CGDisplayHideCursor(_CG_DISPLAY)
             if pressed:
                 self._ripple_signal.emit(float(x), float(y), self._color_index)
         except Exception:

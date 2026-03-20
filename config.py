@@ -9,15 +9,18 @@ IS_BUNDLE = getattr(sys, "frozen", False)
 if IS_BUNDLE:
     # Read-only assets come from the PyInstaller temp dir
     _ASSETS_DIR = sys._MEIPASS
-    # Writable data (settings.json) goes to ~/Library/Application Support/SFPoint/
-    APP_DATA_DIR = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "SFPoint")
+    # Writable data (settings.json) goes to platform-appropriate app data dir
+    if sys.platform == "win32":
+        APP_DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "SFPoint")
+    else:
+        APP_DATA_DIR = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "SFPoint")
     os.makedirs(APP_DATA_DIR, exist_ok=True)
 else:
     _ASSETS_DIR = os.path.dirname(__file__)
     APP_DATA_DIR = os.path.dirname(__file__)
 
 # --- Brand Colors ---
-COLOR_MORADO = QColor(140, 39, 241)      # #8C27F1
+COLOR_MORADO = QColor(139, 92, 246)      # #8B5CF6
 COLOR_AMBAR = QColor(245, 158, 11)       # #F59E0B
 COLOR_RED = QColor(239, 68, 68)          # #EF4444
 COLOR_GREEN = QColor(34, 197, 94)        # #22C55E
@@ -36,19 +39,19 @@ TOOL_TEXT = "text"
 TOOL_LASER = "laser"
 TOOL_HIGHLIGHTER = "highlighter"
 
-# Ctrl+key shortcut mapping (toggle-based)
+# Alt+key shortcut mapping (toggle-based)
 TOOL_SHORTCUTS = {
     "a": TOOL_ARROW,
     "r": TOOL_RECT,
     "c": TOOL_CIRCLE,
     "f": TOOL_FREEHAND,
     "t": TOOL_TEXT,
-    "p": TOOL_LASER,       # Ctrl+P = pointer/laser
+    "p": TOOL_LASER,       # Alt+P = pointer/laser
 }
 
 # Special shortcuts (not tools)
-SHORTCUT_HIDE_TOOLBAR = "h"   # Ctrl+H
-SHORTCUT_SETTINGS = "s"       # Ctrl+S
+SHORTCUT_HIDE_TOOLBAR = "h"   # Alt+H
+SHORTCUT_SETTINGS = "s"       # Alt+S
 
 DEFAULT_TOOL = TOOL_ARROW
 
@@ -59,7 +62,7 @@ STROKE_THICK = 5.0
 STROKE_EXTRA = 8.0
 STROKE_HEAVY = 12.0
 STROKE_HIGHLIGHTER = 20.0
-DEFAULT_STROKE = STROKE_MEDIUM
+DEFAULT_STROKE = STROKE_THICK
 STROKE_STEPS = [STROKE_THIN, STROKE_MEDIUM, STROKE_THICK, STROKE_EXTRA, STROKE_HEAVY]
 
 # --- Fade ---

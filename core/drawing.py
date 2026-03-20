@@ -1,6 +1,7 @@
 """Shape engine: Annotation dataclass + ShapeRenderer for all tools."""
 
 import math
+import sys
 import time
 from dataclasses import dataclass, field
 from PyQt6.QtCore import Qt, QPointF, QRectF
@@ -38,6 +39,13 @@ class ShapeRenderer:
     """Static methods to render each tool's shape via QPainter."""
 
     @staticmethod
+    def _setup_stroke(painter: QPainter, color: QColor, stroke_width: float):
+        pen = QPen(color, stroke_width, Qt.PenStyle.SolidLine,
+                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+
+    @staticmethod
     def draw_arrow(painter: QPainter, ann: Annotation):
         if len(ann.points) < 2:
             return
@@ -66,10 +74,7 @@ class ShapeRenderer:
 
         # Line ends at base of arrowhead (not at p2) so tip is a clean triangle
         base_mid = QPointF((left.x() + right.x()) / 2.0, (left.y() + right.y()) / 2.0)
-        pen = QPen(color, ann.stroke_width, Qt.PenStyle.SolidLine,
-                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        ShapeRenderer._setup_stroke(painter, color, ann.stroke_width)
         painter.drawLine(p1, base_mid)
 
         # Filled triangular arrowhead: base_left → tip (p2) → base_right
@@ -88,11 +93,7 @@ class ShapeRenderer:
             return
         p1, p2 = ann.points[0], ann.points[-1]
         color = _color_with_alpha(ann.color, ann.opacity)
-
-        pen = QPen(color, ann.stroke_width, Qt.PenStyle.SolidLine,
-                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        ShapeRenderer._setup_stroke(painter, color, ann.stroke_width)
 
         x = min(p1[0], p2[0])
         y = min(p1[1], p2[1])
@@ -106,11 +107,7 @@ class ShapeRenderer:
             return
         p1, p2 = ann.points[0], ann.points[-1]
         color = _color_with_alpha(ann.color, ann.opacity)
-
-        pen = QPen(color, ann.stroke_width, Qt.PenStyle.SolidLine,
-                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        ShapeRenderer._setup_stroke(painter, color, ann.stroke_width)
 
         x = min(p1[0], p2[0])
         y = min(p1[1], p2[1])
@@ -123,10 +120,7 @@ class ShapeRenderer:
         if len(ann.points) < 2:
             return
         color = _color_with_alpha(ann.color, ann.opacity)
-        pen = QPen(color, ann.stroke_width, Qt.PenStyle.SolidLine,
-                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        ShapeRenderer._setup_stroke(painter, color, ann.stroke_width)
 
         path = QPainterPath()
         path.moveTo(*ann.points[0])
@@ -151,7 +145,7 @@ class ShapeRenderer:
         color = _color_with_alpha(ann.color, ann.opacity)
         pos = QPointF(*ann.points[0])
 
-        font = QFont(".AppleSystemUIFont", TEXT_FONT_SIZE)
+        font = QFont("Segoe UI" if sys.platform == "win32" else ".AppleSystemUIFont", TEXT_FONT_SIZE)
         font.setBold(True)
         painter.setFont(font)
         painter.setPen(color)
@@ -163,11 +157,7 @@ class ShapeRenderer:
             return
         color = QColor(ann.color)
         color.setAlphaF(HIGHLIGHTER_OPACITY * ann.opacity)
-
-        pen = QPen(color, ann.stroke_width, Qt.PenStyle.SolidLine,
-                    Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        ShapeRenderer._setup_stroke(painter, color, ann.stroke_width)
 
         path = QPainterPath()
         path.moveTo(*ann.points[0])

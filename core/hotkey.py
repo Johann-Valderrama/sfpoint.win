@@ -21,8 +21,8 @@ class HotkeyListener(QObject):
         deactivated() — Esc pressed or tool toggled off
         hide_toolbar() — Alt+H pressed
         open_settings() — Alt+S pressed
-        undo_requested() — Ctrl+Z pressed
-        clear_requested() — Ctrl+Shift+Z pressed
+        undo_requested() — Alt+Z pressed
+        clear_requested() — Alt+Shift+Z pressed
     """
 
     tool_toggled = pyqtSignal(str)
@@ -59,6 +59,14 @@ class HotkeyListener(QObject):
     def update_shortcuts(self, shortcuts: dict):
         self._shortcuts = dict(shortcuts)
 
+    def set_laser_state(self, on: bool):
+        """Sync internal laser state (called from toolbar context menu)."""
+        self._laser_on = on
+
+    def set_active_tool(self, tool: str | None):
+        """Sync internal active tool state (called from toolbar context menu)."""
+        self._active_tool = tool
+
     def _on_press(self, key):
         # Track modifiers
         if key in (keyboard.Key.alt_l, keyboard.Key.alt_r, keyboard.Key.alt):
@@ -91,17 +99,16 @@ class HotkeyListener(QObject):
 
         char_lower = char.lower()
 
-        # Ctrl+Z / Ctrl+Shift+Z (undo/clear) — no Alt required
-        if self._ctrl_held and not self._alt_held:
-            if char_lower == "z":
-                if self._shift_held:
-                    self.clear_requested.emit()
-                else:
-                    self.undo_requested.emit()
-                return
-
         # Alt+key shortcuts (toggle-based)
         if not self._alt_held:
+            return
+
+        # Alt+Z / Alt+Shift+Z (undo/clear)
+        if char_lower == "z":
+            if self._shift_held:
+                self.clear_requested.emit()
+            else:
+                self.undo_requested.emit()
             return
 
         # Alt+H = hide/show toolbar

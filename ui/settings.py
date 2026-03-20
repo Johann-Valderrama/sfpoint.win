@@ -3,7 +3,7 @@
 import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
+from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
 
 if sys.platform == "darwin":
     try:
@@ -190,7 +190,7 @@ class SettingsPanel(QWidget):
         layout.addWidget(fixed_label)
 
         for name, shortcut in [("Hide Toolbar", "Alt+H"), ("Settings", "Alt+S"),
-                                ("Undo", "Ctrl+Z"), ("Clear All", "Ctrl+Shift+Z"), ("Deactivate", "Esc")]:
+                                ("Undo", "Alt+Z"), ("Clear All", "Alt+Shift+Z"), ("Deactivate", "Esc")]:
             row = QHBoxLayout()
             lbl = QLabel(name)
             lbl.setStyleSheet("color: rgba(255,255,255,0.5); font-size: 11px;")
@@ -251,7 +251,6 @@ class SettingsPanel(QWidget):
         painter.fillPath(path, QColor(20, 20, 25, 240))
 
         # Border
-        from PyQt6.QtGui import QPen
         painter.setPen(QPen(QColor(139, 92, 246, 60), 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(0, 0, w, h, 16, 16)

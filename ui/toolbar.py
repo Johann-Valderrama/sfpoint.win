@@ -5,7 +5,7 @@ Alt+H toggles visibility.
 """
 
 import sys
-from PyQt6.QtWidgets import QWidget, QApplication, QMenu, QWidgetAction, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QApplication, QMenu
 from PyQt6.QtCore import Qt, QRectF, QPointF, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPainterPath, QPen, QPixmap, QFont, QAction, QIcon
 
@@ -75,7 +75,6 @@ QMenu::separator {
 """
 
 COLOR_NAMES = ["Morado", "Ambar", "Rojo", "Verde", "Blanco"]
-COLOR_HEX = ["#8B5CF6", "#F59E0B", "#EF4444", "#22C55E", "#FFFFFF"]
 
 STROKE_LABELS = {STROKE_THIN: "Thin", STROKE_MEDIUM: "Medium", STROKE_THICK: "Thick", STROKE_EXTRA: "Extra", STROKE_HEAVY: "Heavy"}
 
@@ -355,10 +354,10 @@ class ToolbarWidget(QWidget):
         menu.addSeparator()
 
         # --- Actions ---
-        undo_action = menu.addAction("  Undo          Ctrl+Z")
+        undo_action = menu.addAction("  Undo          Alt+Z")
         undo_action.triggered.connect(self.undo_requested.emit)
 
-        clear_action = menu.addAction("  Clear All    Ctrl+Shift+Z")
+        clear_action = menu.addAction("  Clear All    Alt+Shift+Z")
         clear_action.triggered.connect(self.clear_requested.emit)
 
         menu.addSeparator()

@@ -3,11 +3,10 @@
 Alt+key toggles annotation tools on/off.
 Alt+A=arrow, Alt+R=rect, Alt+C=circle, Alt+F=freehand,
 Alt+T=text, Alt+P=pointer, Alt+H=hide toolbar, Alt+S=settings.
-Esc=deactivate, Ctrl+Z=undo, Ctrl+Shift+Z=clear all.
+Esc=deactivate, Alt+Z=undo, Alt+Shift+Z=clear all.
 """
 
 import os
-import plistlib
 import signal
 import sys
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
@@ -45,6 +44,7 @@ def _is_launch_at_login() -> bool:
 
 def _set_launch_at_login(enabled: bool):
     if sys.platform == "darwin":
+        import plistlib
         if enabled:
             app_path = "/Applications/SFPoint.app" if IS_BUNDLE else ""
             if not app_path or not os.path.exists(app_path):
@@ -181,7 +181,7 @@ def main():
     print("  Alt+A=arrow  Alt+R=rect  Alt+C=circle  Alt+F=freehand")
     print("  Alt+T=text   Alt+P=pointer")
     print("  Alt+H=hide toolbar  Alt+S=settings")
-    print("  Ctrl+Z=undo  Ctrl+Shift+Z=clear  Esc=deactivate  Right-click=menu")
+    print("  Alt+Z=undo  Alt+Shift+Z=clear  Esc=deactivate  Right-click=menu")
 
     exit_code = app.exec()
     hotkey.stop()
@@ -221,19 +221,19 @@ def _on_context_tool(canvas: CanvasManager, toolbar: ToolbarWidget, hotkey, tool
         elif not canvas.is_active:
             toolbar.set_active(False)
         # Sync hotkey internal state
-        hotkey._laser_on = new_state
+        hotkey.set_laser_state(new_state)
     else:
         # If clicking the already-active tool, deactivate
         if canvas.is_active and canvas.current_tool == tool:
             canvas.set_active(False)
             toolbar.set_active(False)
-            hotkey._active_tool = None
+            hotkey.set_active_tool(None)
         else:
             canvas.set_tool(tool)
             canvas.set_active(True)
             toolbar.update_tool(tool)
             toolbar.set_active(True)
-            hotkey._active_tool = tool
+            hotkey.set_active_tool(tool)
 
 
 def _on_context_color(canvas: CanvasManager, toolbar: ToolbarWidget, idx: int):
