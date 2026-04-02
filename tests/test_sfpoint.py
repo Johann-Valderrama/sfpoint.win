@@ -1,4 +1,4 @@
-"""tests/test_sfpoint.py — Unit tests for SFPoint core logic.
+"""tests/test_sfpoint.py — Unit tests for VPoint core logic.
 
 Run: pytest tests/test_sfpoint.py -v
 No display required (all Qt widgets are mocked).

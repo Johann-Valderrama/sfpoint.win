@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" width="120" alt="SFPoint Logo">
+  <img src="logo.png" width="120" alt="VPoint Logo">
 </p>
 
-<h1 align="center">SFPoint (Windows Edition)</h1>
+<h1 align="center">VPoint — Windows Edition</h1>
 
 <p align="center">
   <strong>Open-source screen annotation tool for Windows. Presentify alternative at $0 cost.</strong>
@@ -18,15 +18,17 @@
 
 ---
 
-## What is SFPoint?
+## What is VPoint?
 
-SFPoint is a **screen annotation overlay** for Windows. Toggle a hotkey, draw on your screen, keep teaching. Arrows, rectangles, circles, freehand, text, laser pointer — all on a transparent overlay that auto-fades after 3 seconds.
+VPoint is a **screen annotation overlay** for Windows. Toggle a hotkey, draw on your screen, keep teaching. Arrows, rectangles, circles, freehand, text, laser pointer, highlighter — all on a transparent overlay that auto-fades after 3 seconds.
 
-Built as a replacement for premium tools ($6.99+). SFPoint is free, open-source, and fully customizable.
+Built as a replacement for premium tools ($6.99+). VPoint is free, open-source, and fully customizable.
+
+> This is the **Windows port** of [SFPoint](https://github.com/daniel-carreon/sfpoint). Original macOS version by [@daniel-carreon](https://github.com/daniel-carreon).
 
 ### Features
 
-- **Native Windows app** — lives in the system tray, no terminal needed, starts with your PC
+- **System tray app** — lives in the Windows taskbar tray, no terminal needed
 - **7 annotation tools** — arrow, rectangle, circle, freehand, text, laser pointer, highlighter
 - **Toggle-based shortcuts** — Alt+key to activate, same key or Esc to deactivate
 - **Auto-fade** — annotations disappear after 3 seconds (configurable)
@@ -34,8 +36,10 @@ Built as a replacement for premium tools ($6.99+). SFPoint is free, open-source,
 - **No focus stealing** — overlay floats above everything without interrupting your work
 - **Click-through** — laser always passes clicks through; other tools only capture when active
 - **Floating toolbar** — draggable pill showing current tool and color
+- **Right-click context menu** — change tool, color, stroke width, undo, or quit from anywhere on screen
 - **Rebindable shortcuts** — settings panel (Alt+S) to customize keybindings
-- **Brand colors** — morado (#8B5CF6) + ambar (#F59E0B) from SaaS Factory
+- **Multi-monitor support** — separate overlay per physical screen
+- **Brand colors** — morado (#8B5CF6) + ambar (#F59E0B) from VelOS
 
 ---
 
@@ -62,25 +66,34 @@ pip install -r requirements.txt
 python main.py
 ```
 
+Or use the batch launcher:
+
+```powershell
+run_sfpoint.bat
+```
+
 ---
 
-## Usage
-
-| Action | Shortcut | Reason |
-|--------|----------|--------|
-| **Arrow** | `Alt+A` | En Office, Alt + A suele abrir el menú "Archivo", pero si tu app tiene prioridad de capa (overlay), suele funcionar bien. |
-| **Rectangle** | `Alt+R` | Evitas conflictos con comandos de edición. |
-| **Circle** | `Alt+C` | Evitas el conflicto con Copiar (Ctrl+C). |
-| **Freehand** | `Alt+F` | Alternativa segura al "Buscar" (Ctrl+F). |
-| **Text** | `Alt+T` | (type, Enter to place) Evitas conflictos de tabulación o tareas. |
-| **Laser pointer** | `Alt+P` | Vital: Ctrl + P detendría tu presentación para intentar imprimir. |
-| **Hide toolbar** | `Alt+H` | Limpio de comandos de sistema comunes. |
-| **Settings** | `Alt+S` | Seguro en la mayoría de contextos de dibujo. |
-| **Undo** | `Ctrl+Z` | Estándar universal en Windows. |
-| **Clear all** | `Ctrl+Shift+Z` | Estándar para "Rehacer", pero fácil de recordar para limpiar. |
-| **Deactivate** | `Esc` | Universal para salir de cualquier modo. |
+## Shortcuts
 
 All tool shortcuts are **toggle-based**: press once to activate, press again (or Esc) to deactivate.
+
+| Action | Shortcut |
+|--------|----------|
+| Arrow | `Alt+A` |
+| Rectangle | `Alt+R` |
+| Circle | `Alt+C` |
+| Freehand | `Alt+F` |
+| Text | `Alt+T` (type, then Enter to place) |
+| Laser pointer | `Alt+P` |
+| Hide / show toolbar | `Alt+H` |
+| Settings | `Alt+S` |
+| Undo | `Alt+Z` |
+| Clear all | `Alt+Shift+Z` |
+| Deactivate | `Esc` |
+| Context menu | Right-click anywhere |
+
+> **Why Alt+key?** Avoids conflicts with standard Windows shortcuts (Ctrl+C = copy, Ctrl+P = print, Ctrl+Z = undo in other apps, etc.).
 
 ---
 
@@ -98,9 +111,10 @@ Alt+Key (pynput) --> Toggle Tool On/Off --> Canvas Overlay (PyQt6)
 
 Key technical decisions:
 - **PyQt6** for native windows that float without stealing focus
-- **Qt QueuedConnection** for thread-safe signals between pynput and UI
+- **Qt QueuedConnection** for thread-safe signals between pynput and Qt main thread
 - **QPainter** for all rendering (shapes, laser trail with radial gradients, text)
 - **Toggle-based hotkeys** instead of hold-based for better ergonomics
+- **WindowTransparentForInput** flag for native Windows click-through on laser mode
 
 ---
 
@@ -117,12 +131,16 @@ TOOL_SHORTCUTS = {
 
 # Fade timing
 FADE_DELAY = 3.0        # seconds before fade starts
-FADE_DURATION = 0.5      # seconds for fade animation
+FADE_DURATION = 0.5     # seconds for fade animation
 
-# Laser pointer (subtle, elegant)
-LASER_DOT_RADIUS = 5.0
-LASER_GLOW_RADIUS = 14.0
+# Laser pointer (neon bloom — Google Slides-inspired)
+LASER_DOT_RADIUS = 7.5
+LASER_GLOW_RADIUS = 21.0
 LASER_TRAIL_LENGTH = 18  # clean, short trail
+
+# Click ripple (morado expanding ring)
+RIPPLE_MAX_RADIUS = 20.0
+RIPPLE_DURATION = 0.55  # seconds
 
 # Toolbar
 TOOLBAR_HEIGHT = 34
@@ -133,16 +151,31 @@ Custom shortcuts are saved to `settings.json` via the settings panel (Alt+S).
 
 ---
 
+## Brand Colors
+
+| Color | Hex | Use |
+|-------|-----|-----|
+| Morado | `#8B5CF6` | Default annotations, click ripple |
+| Ambar | `#F59E0B` | Laser pointer dot + trail |
+| Red | `#EF4444` | Palette option |
+| Green | `#22C55E` | Palette option |
+| White | `#FFFFFF` | Palette option |
+
+Switch colors via the right-click context menu or the toolbar color dot.
+
+---
+
 ## Cost Comparison
 
-| | Premium Tools | SFPoint |
+| | Premium Tools | VPoint |
 |---|---|---|
-| Cost | $6.99+ one-time | Free |
+| Cost | $6.99+ | Free |
 | Customizable | Limited | Fully |
 | Open source | No | Yes |
 | Laser pointer | Red | Ambar (Google Slides-style) |
 | Auto-fade | Yes | Yes (configurable) |
 | Rebindable shortcuts | No | Yes |
+| Multi-monitor | Varies | Yes |
 
 ---
 
@@ -150,7 +183,20 @@ Custom shortcuts are saved to `settings.json` via the settings panel (Alt+S).
 
 | Problem | Solution |
 |---------|----------|
-| Python version error | Requires 3.12+ (`list[]` generics, `\|` union syntax) |
+| Tool doesn't activate | Check no other app is capturing the Alt+key shortcut |
+| Python version error | Requires 3.12+ — install from python.org |
+| Laser blocks clicks | Update to latest version — laser uses click-through mode |
+| No ripple on click | pynput mouse listener may need to be restarted |
+| Overlay not visible | Check multi-monitor setup — overlay covers all screens |
+
+---
+
+## What's Not Yet Ported
+
+| Feature | Status |
+|---------|--------|
+| `.exe` installer / PyInstaller build | TODO |
+| Launch at login (Windows registry) | TODO |
 
 ---
 
@@ -161,6 +207,9 @@ MIT License. Do whatever you want with it.
 ---
 
 <p align="center">
-  Built with Claude Opus 4.6 in a single session.<br>
-  <sub>From <a href="https://github.com/Johann-valderrama">Johann-valderrama</a> — <strong>SF</strong>Point (Windows Fork)</sub>
+  Windows port built with Claude Sonnet 4.6.<br>
+  <sub>
+    Fork by <a href="https://github.com/Johann-valderrama">Johann-valderrama</a> —
+    original by <a href="https://github.com/daniel-carreon">daniel-carreon</a>
+  </sub>
 </p>

@@ -10,5 +10,5 @@ echo Activando entorno virtual e instalando dependencias (esto puede tomar un mo
 call venv\Scripts\activate
 pip install -q -r requirements.txt
 
-echo Iniciando SFPoint...
+echo Iniciando VPoint...
 start /b pythonw main.py

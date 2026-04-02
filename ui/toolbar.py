@@ -1,6 +1,6 @@
 """Mini floating toolbar — pill-style indicator for current tool and color.
 
-Reuses SFlow's floating window pattern.
+Reuses VPoint's floating window pattern.
 Alt+H toggles visibility.
 """
 
@@ -20,7 +20,7 @@ if sys.platform == "darwin":
 from config import (
     TOOLBAR_HEIGHT, TOOLBAR_WIDTH, TOOLBAR_OPACITY, TOOLBAR_CORNER_RADIUS,
     TOOLBAR_MARGIN_BOTTOM, TOOLBAR_ICON_SIZE, LOGO_PATH, LOGO_SIZE,
-    COLOR_PALETTE, DEFAULT_COLOR_INDEX, DEFAULT_TOOL,
+    COLOR_PALETTE, DEFAULT_COLOR_INDEX, DEFAULT_TOOL, DEFAULT_STROKE,
     TOOL_ARROW, TOOL_RECT, TOOL_CIRCLE, TOOL_FREEHAND,
     TOOL_TEXT, TOOL_LASER, TOOL_HIGHLIGHTER,
     LASER_COLOR,
@@ -98,7 +98,7 @@ class ToolbarWidget(QWidget):
         super().__init__()
         self._tool = DEFAULT_TOOL
         self._color_index = DEFAULT_COLOR_INDEX
-        self._stroke_width = STROKE_MEDIUM
+        self._stroke_width = DEFAULT_STROKE
         self._active = False
         self._drag_pos = None
 
@@ -367,7 +367,7 @@ class ToolbarWidget(QWidget):
 
         menu.addSeparator()
 
-        quit_action = menu.addAction("  Quit SFPoint")
+        quit_action = menu.addAction("  Quit VPoint")
         quit_action.triggered.connect(self.quit_requested.emit)
 
         menu.exec(global_pos)

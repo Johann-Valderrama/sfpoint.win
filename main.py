@@ -1,4 +1,4 @@
-"""SFPoint — Screen Annotation Tool.
+"""VPoint — Screen Annotation Tool.
 
 Alt+key toggles annotation tools on/off.
 Alt+A=arrow, Alt+R=rect, Alt+C=circle, Alt+F=freehand,
@@ -31,7 +31,7 @@ def _ensure_accessibility() -> bool:
 
 
 # --- Launch Agent ---
-_BUNDLE_ID = "so.saasfactory.sfpoint"
+_BUNDLE_ID = "so.velos.vpoint"
 _LAUNCH_AGENT_PATH = os.path.expanduser(f"~/Library/LaunchAgents/{_BUNDLE_ID}.plist")
 
 
@@ -46,7 +46,7 @@ def _set_launch_at_login(enabled: bool):
     if sys.platform == "darwin":
         import plistlib
         if enabled:
-            app_path = "/Applications/SFPoint.app" if IS_BUNDLE else ""
+            app_path = "/Applications/VPoint.app" if IS_BUNDLE else ""
             if not app_path or not os.path.exists(app_path):
                 return
             plist = {
@@ -96,7 +96,7 @@ def main():
 
     tray_menu.addSeparator()
 
-    quit_action = tray_menu.addAction("Quit SFPoint")
+    quit_action = tray_menu.addAction("Quit VPoint")
     quit_action.triggered.connect(app.quit)
 
     tray.setContextMenu(tray_menu)
@@ -177,7 +177,7 @@ def main():
         except Exception:
             pass
 
-    print("SFPoint running.")
+    print("VPoint running.")
     print("  Alt+A=arrow  Alt+R=rect  Alt+C=circle  Alt+F=freehand")
     print("  Alt+T=text   Alt+P=pointer")
     print("  Alt+H=hide toolbar  Alt+S=settings")

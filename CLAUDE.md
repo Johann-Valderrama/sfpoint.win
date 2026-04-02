@@ -1,10 +1,10 @@
-# CLAUDE.md — SFPoint Windows: Complete Setup & Development Guide
+# CLAUDE.md — VPoint Windows: Complete Setup & Development Guide
 
-> This file is designed for AI agents. If you just cloned this repo, follow the **Quick Start** section to get SFPoint running end-to-end without human intervention.
+> This file is designed for AI agents. If you just cloned this repo, follow the **Quick Start** section to get VPoint running end-to-end without human intervention.
 
-## What is SFPoint?
+## What is VPoint?
 
-SFPoint is a Windows screen annotation tool (Presentify replacement). Toggle-based Alt+key shortcuts activate/deactivate tools. Draw temporary arrows, rectangles, circles, freehand lines, text, laser pointer, or highlighter on a transparent fullscreen overlay. Annotations auto-fade after 3 seconds. Laser pointer is click-through (doesn't block mouse). Multi-monitor support included. SF brand colors: morado #8B5CF6, ambar #F59E0B.
+VPoint is a Windows screen annotation tool (Presentify replacement). Toggle-based Alt+key shortcuts activate/deactivate tools. Draw temporary arrows, rectangles, circles, freehand lines, text, laser pointer, or highlighter on a transparent fullscreen overlay. Annotations auto-fade after 3 seconds. Laser pointer is click-through (doesn't block mouse). Multi-monitor support included. VelOS brand colors: morado #8B5CF6, ambar #F59E0B.
 
 > **Note**: This is the Windows port (`windows-port` branch). The original macOS version lives in the `main` branch of the upstream repo.
 
@@ -73,12 +73,13 @@ run_sfpoint.bat
 ## Project Structure
 
 ```
-sfpoint.win/
+vpoint/
 ├── main.py              # Entry point — tray icon, launch-at-login, signal wiring
 ├── config.py            # All configuration constants (UI, tools, paths, bundle detection)
 ├── run_sfpoint.bat      # Windows batch launcher
 ├── start_sfpoint.sh     # Linux/macOS shell launcher
 ├── sfpoint.spec         # PyInstaller spec (macOS .app bundle — not yet ported to Windows)
+
 ├── build.sh             # macOS build script (not used on Windows)
 ├── core/
 │   ├── hotkey.py        # Global hotkeys (pynput, toggle-based Alt+key)
@@ -88,9 +89,9 @@ sfpoint.win/
 │   ├── toolbar.py       # Floating pill toolbar (current tool + color)
 │   └── settings.py      # Settings panel (rebindable shortcuts)
 ├── settings.json        # User settings (auto-generated, gitignored in practice)
-├── logo.png             # SFPoint logo (full size)
+├── logo.png             # VPoint logo (full size)
 ├── logo_small.png       # Small logo (22x22 for tray + toolbar pill)
-├── SFPoint.icns         # macOS app icon (legacy)
+├── VPoint.icns          # macOS app icon (legacy)
 ├── requirements.txt     # PyQt6, pynput, numpy
 ├── PRP.md               # Project Requirements Plan (original macOS build blueprint)
 ├── CLAUDE.md            # This file
@@ -122,8 +123,8 @@ On Windows, Qt flags `FramelessWindowHint + WindowStaysOnTopHint + Tool + Window
 `config.py` detects `sys.frozen` to switch between dev and bundled app:
 - **Dev mode**: assets and data live in the project root directory
 - **Bundle mode**: read-only assets (logo) come from `sys._MEIPASS`, writable data (settings.json) goes to:
-  - Windows: `%APPDATA%\SFPoint\`
-  - macOS: `~/Library/Application Support/SFPoint/`
+  - Windows: `%APPDATA%\VPoint\`
+  - macOS: `~/Library/Application Support/VPoint/`
 
 ### 6. Desktop App Features (main.py)
 - **System Tray**: QSystemTrayIcon with Settings, "Start with Windows" toggle, Quit

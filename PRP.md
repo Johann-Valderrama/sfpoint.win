@@ -1,19 +1,19 @@
-# PRP-001: SFPoint — Screen Annotation Tool (Presentify Alternative)
+# PRP-001: VPoint — Screen Annotation Tool (Presentify Alternative)
 
 > **Status**: COMPLETED
 > **Date**: 2026-03-05
 > **Author**: Claude Opus 4.6
-> **Project**: sfpoint
+> **Project**: vpoint
 
 > **IMPORTANT — HISTORICAL DOCUMENT**
-> This PRP was written for the **original macOS version** of SFPoint. The project has since been ported to Windows (`windows-port` branch). Key differences in the current Windows implementation:
+> This PRP was written for the **original macOS version** of VPoint (formerly SFPoint). The project has since been ported to Windows (`windows-port` branch). Key differences in the current Windows implementation:
 > - **Shortcuts**: Alt+key (not fn+key or Ctrl+key). Undo: Ctrl+Z, Clear: Ctrl+Shift+Z
 > - **Dependencies**: `PyQt6`, `pynput`, `numpy` (no PyObjC/AppKit on Windows)
-> - **Directory**: project is `sfpoint/` (not `smark/`)
+> - **Directory**: project is `vpoint/` (not `smark/`)
 > - **Laser pointer**: mapped to `P` (not `L`), color is ambar #F59E0B (not red)
 > - **Multi-monitor**: fully supported via per-screen overlays
 > - **Color morado**: #8B5CF6 (QColor(139, 92, 246))
-> - **Data dir**: `%APPDATA%\SFPoint` on Windows (not `~/Library/Application Support/`)
+> - **Data dir**: `%APPDATA%\VPoint` on Windows (not `~/Library/Application Support/`)
 >
 > For current documentation, see **CLAUDE.md** and **README.md**.
 
@@ -112,8 +112,8 @@ smark/
 │   ├── __init__.py
 │   ├── canvas.py           # Fullscreen transparent overlay (click-through toggle)
 │   └── toolbar.py          # Mini floating toolbar (tool + color indicator)
-├── logo.png                # SF brand logo (full size)
-├── logo_small.png          # SF brand logo (for toolbar, ~22x22)
+├── logo.png                # VPoint brand logo (full size)
+├── logo_small.png          # VPoint brand logo (for toolbar, ~22x22)
 ├── requirements.txt
 └── .gitignore
 ```

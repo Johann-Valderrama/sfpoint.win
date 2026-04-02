@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# sfpoint.spec — PyInstaller config for SFPoint.app
+# sfpoint.spec — PyInstaller config for VPoint.app
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
@@ -54,7 +54,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="SFPoint",
+    name="VPoint",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -71,22 +71,22 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name="SFPoint",
+    name="VPoint",
 )
 
 app = BUNDLE(
     coll,
-    name="SFPoint.app",
-    icon="SFPoint.icns",
-    bundle_identifier="so.saasfactory.sfpoint",
+    name="VPoint.app",
+    icon="VPoint.icns",
+    bundle_identifier="so.velos.vpoint",
     info_plist={
         "LSUIElement": True,
-        "CFBundleName": "SFPoint",
-        "CFBundleDisplayName": "SFPoint",
+        "CFBundleName": "VPoint",
+        "CFBundleDisplayName": "VPoint",
         "CFBundleShortVersionString": "1.0.0",
         "CFBundleVersion": "1",
-        "NSAccessibilityUsageDescription": "SFPoint needs Accessibility to detect global hotkeys and display screen annotations.",
-        "NSAppleEventsUsageDescription": "SFPoint uses AppleScript for system integration.",
+        "NSAccessibilityUsageDescription": "VPoint needs Accessibility to detect global hotkeys and display screen annotations.",
+        "NSAppleEventsUsageDescription": "VPoint uses AppleScript for system integration.",
         "NSHighResolutionCapable": True,
     },
 )

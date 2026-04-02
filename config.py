@@ -11,9 +11,9 @@ if IS_BUNDLE:
     _ASSETS_DIR = sys._MEIPASS
     # Writable data (settings.json) goes to platform-appropriate app data dir
     if sys.platform == "win32":
-        APP_DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "SFPoint")
+        APP_DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "VPoint")
     else:
-        APP_DATA_DIR = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "SFPoint")
+        APP_DATA_DIR = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "VPoint")
     os.makedirs(APP_DATA_DIR, exist_ok=True)
 else:
     _ASSETS_DIR = os.path.dirname(__file__)

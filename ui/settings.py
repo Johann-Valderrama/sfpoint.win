@@ -149,7 +149,7 @@ class SettingsPanel(QWidget):
         layout.setSpacing(6)
 
         # Title
-        title = QLabel("SFPoint Settings")
+        title = QLabel("VPoint Settings")
         title.setStyleSheet("color: white; font-size: 15px; font-weight: 700;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
