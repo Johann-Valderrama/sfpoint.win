@@ -120,6 +120,10 @@ def main():
         toolbar.toggle_visibility,
         Qt.ConnectionType.QueuedConnection,
     )
+    hotkey.collapse_toolbar.connect(
+        toolbar.toggle_collapse,
+        Qt.ConnectionType.QueuedConnection,
+    )
     hotkey.open_settings.connect(
         settings.toggle,
         Qt.ConnectionType.QueuedConnection,

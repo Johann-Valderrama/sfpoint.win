@@ -6,7 +6,7 @@ Alt+H toggles visibility.
 
 import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QMenu
-from PyQt6.QtCore import Qt, QRectF, QPointF, pyqtSignal
+from PyQt6.QtCore import Qt, QRectF, QPointF, QTimer, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPainterPath, QPen, QPixmap, QFont, QAction, QIcon
 
 if sys.platform == "darwin":
@@ -20,6 +20,8 @@ if sys.platform == "darwin":
 from config import (
     TOOLBAR_HEIGHT, TOOLBAR_WIDTH, TOOLBAR_OPACITY, TOOLBAR_CORNER_RADIUS,
     TOOLBAR_MARGIN_BOTTOM, TOOLBAR_ICON_SIZE, LOGO_PATH, LOGO_SIZE,
+    TOOLBAR_COLLAPSED_WIDTH, TOOLBAR_COLLAPSED_HEIGHT, TOOLBAR_COLLAPSED_COLOR, TOOLBAR_COLLAPSED_OFFSET_X,
+    TOOLBAR_COLLAPSED_MARGIN_BOTTOM,
     COLOR_PALETTE, DEFAULT_COLOR_INDEX, DEFAULT_TOOL, DEFAULT_STROKE,
     TOOL_ARROW, TOOL_RECT, TOOL_CIRCLE, TOOL_FREEHAND,
     TOOL_TEXT, TOOL_LASER, TOOL_HIGHLIGHTER,
@@ -27,6 +29,9 @@ from config import (
     STROKE_THIN, STROKE_MEDIUM, STROKE_THICK, STROKE_EXTRA, STROKE_HEAVY,
 )
 
+
+_STATE_EXPANDED  = "expanded"
+_STATE_COLLAPSED = "collapsed"
 
 TOOL_LABELS = {
     TOOL_ARROW: "Arrow",
@@ -102,6 +107,18 @@ class ToolbarWidget(QWidget):
         self._active = False
         self._drag_pos = None
 
+        # Collapsed state + animación
+        self._display_state = _STATE_EXPANDED
+        self._current_w = float(TOOLBAR_WIDTH)
+        self._current_h = float(TOOLBAR_HEIGHT)
+        self._target_w  = float(TOOLBAR_WIDTH)
+        self._target_h  = float(TOOLBAR_HEIGHT)
+        self._bottom_anchor_y: int = 0
+
+        self._anim_timer = QTimer()
+        self._anim_timer.setInterval(16)
+        self._anim_timer.timeout.connect(self._animate_size)
+
         self._bg_color = QColor(15, 15, 15, int(255 * TOOLBAR_OPACITY))
 
         self._logo = QPixmap(LOGO_PATH)
@@ -120,7 +137,8 @@ class ToolbarWidget(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setFixedSize(TOOLBAR_WIDTH, TOOLBAR_HEIGHT)
+        self.setFixedWidth(TOOLBAR_WIDTH)
+        self.setFixedHeight(TOOLBAR_HEIGHT)
 
         self._position_on_screen()
 
@@ -128,9 +146,13 @@ class ToolbarWidget(QWidget):
         screen = QApplication.primaryScreen()
         if screen:
             geo = screen.availableGeometry()
-            x = geo.center().x() - TOOLBAR_WIDTH // 2
-            y = geo.bottom() - TOOLBAR_MARGIN_BOTTOM - TOOLBAR_HEIGHT
-            self.move(x, y)
+            if self._display_state == _STATE_COLLAPSED:
+                self._bottom_anchor_y = geo.bottom() - TOOLBAR_COLLAPSED_MARGIN_BOTTOM
+                x = geo.center().x() + TOOLBAR_COLLAPSED_OFFSET_X - TOOLBAR_COLLAPSED_WIDTH // 2
+            else:
+                self._bottom_anchor_y = geo.bottom() - TOOLBAR_MARGIN_BOTTOM
+                x = geo.center().x() - TOOLBAR_WIDTH // 2
+            self.move(x, self._bottom_anchor_y - int(self._current_h))
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -179,6 +201,48 @@ class ToolbarWidget(QWidget):
         else:
             self.show()
 
+    def toggle_collapse(self):
+        """Ctrl+H: colapsa a círculo o expande de vuelta."""
+        if self._display_state == _STATE_EXPANDED:
+            self._display_state = _STATE_COLLAPSED
+            self._target_w = float(TOOLBAR_COLLAPSED_WIDTH)
+            self._target_h = float(TOOLBAR_COLLAPSED_HEIGHT)
+            # Reajusta posición a centro bottom (fijo) al colapsar
+            self._position_on_screen()
+        else:
+            self._display_state = _STATE_EXPANDED
+            self._target_w = float(TOOLBAR_WIDTH)
+            self._target_h = float(TOOLBAR_HEIGHT)
+        if not self._anim_timer.isActive():
+            self._anim_timer.start()
+
+    def _animate_size(self):
+        for attr, target_attr in [('_current_w', '_target_w'), ('_current_h', '_target_h')]:
+            cur = getattr(self, attr)
+            tgt = getattr(self, target_attr)
+            diff = tgt - cur
+            setattr(self, attr, tgt if abs(diff) < 0.5 else cur + diff * 0.22)
+
+        settled = (abs(self._target_w - self._current_w) < 0.5 and
+                   abs(self._target_h - self._current_h) < 0.5)
+        if settled:
+            self._anim_timer.stop()
+
+        new_w = max(1, int(self._current_w))
+        new_h = max(1, int(self._current_h))
+        self.setFixedWidth(new_w)
+        self.setFixedHeight(new_h)
+
+        screen = QApplication.primaryScreen()
+        if screen:
+            geo = screen.availableGeometry()
+            if self._display_state == _STATE_COLLAPSED:
+                x = geo.center().x() + TOOLBAR_COLLAPSED_OFFSET_X - new_w // 2
+            else:
+                x = geo.center().x() - new_w // 2
+            self.move(x, self._bottom_anchor_y - new_h)
+        self.update()
+
     # --- Paint ---
 
     def paintEvent(self, _event):
@@ -186,6 +250,18 @@ class ToolbarWidget(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         w = self.width()
         h = self.height()
+
+        # --- Collapsed: pastilla gris (estilo SFlow idle) ---
+        if self._display_state == _STATE_COLLAPSED:
+            radius = h / 2.0
+            path = QPainterPath()
+            path.addRoundedRect(0.0, 0.0, float(w), float(h), radius, radius)
+            painter.fillPath(path, TOOLBAR_COLLAPSED_COLOR)
+            painter.setPen(QPen(QColor(255, 255, 255, 40), 0.5))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(QRectF(0.25, 0.25, w - 0.5, h - 0.5), radius, radius)
+            painter.end()
+            return
 
         # Background
         path = QPainterPath()
@@ -259,6 +335,32 @@ class ToolbarWidget(QWidget):
             painter.drawEllipse(QPointF(dot_cx, dot_cy), dot_r + 3, dot_r + 3)
 
         painter.end()
+
+    def _draw_collapsed_icon(self, painter: QPainter, cx: float, cy: float):
+        """Ícono centrado en el círculo. Usa logo; si no carga, dibuja lápiz."""
+        if not self._logo.isNull():
+            icon_size = min(22, self.width() - 8)
+            scaled = self._logo.scaled(
+                icon_size, icon_size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            painter.drawPixmap(
+                int(cx - scaled.width() / 2),
+                int(cy - scaled.height() / 2),
+                scaled,
+            )
+        else:
+            # Fallback: lápiz estilo Lucide con QPainter
+            s = min(self.width(), self.height()) * 0.28
+            pen = QPen(QColor(255, 255, 255, 200), 1.5,
+                       Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+                       Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawLine(QPointF(cx - s, cy + s), QPointF(cx + s * 0.5, cy - s * 0.5))
+            painter.drawLine(QPointF(cx - s, cy + s), QPointF(cx - s * 0.5, cy + s * 0.6))
+            painter.drawLine(QPointF(cx - s * 0.5, cy + s * 0.6), QPointF(cx - s * 0.7, cy + s))
 
     def _draw_tool_icon(self, painter: QPainter, tool: str, cx: float, cy: float, color: QColor):
         """Draw a mini icon representing the tool."""
@@ -380,12 +482,17 @@ class ToolbarWidget(QWidget):
             event.accept()
             return
         if event.button() == Qt.MouseButton.LeftButton:
+            if self._display_state == _STATE_COLLAPSED:
+                self.toggle_collapse()
+                event.accept()
+                return
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton and self._drag_pos:
             self.move(event.globalPosition().toPoint() - self._drag_pos)
+            self._bottom_anchor_y = self.y() + self.height()
             event.accept()
 
     def mouseReleaseEvent(self, event):

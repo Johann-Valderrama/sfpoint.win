@@ -62,7 +62,7 @@ STROKE_THICK = 5.0
 STROKE_EXTRA = 8.0
 STROKE_HEAVY = 12.0
 STROKE_HIGHLIGHTER = 20.0
-DEFAULT_STROKE = STROKE_THICK
+DEFAULT_STROKE = STROKE_EXTRA
 STROKE_STEPS = [STROKE_THIN, STROKE_MEDIUM, STROKE_THICK, STROKE_EXTRA, STROKE_HEAVY]
 
 # --- Fade ---
@@ -90,6 +90,14 @@ TOOLBAR_OPACITY = 0.90
 TOOLBAR_CORNER_RADIUS = 17
 TOOLBAR_MARGIN_BOTTOM = 14
 TOOLBAR_ICON_SIZE = 16
+
+# --- Toolbar collapsed (rest) state ---
+TOOLBAR_COLLAPSED_WIDTH    = 12                          # diámetro del círculo (dot pequeño)
+TOOLBAR_COLLAPSED_HEIGHT   = 12                          # igual al ancho → círculo perfecto
+TOOLBAR_COLLAPSED_COLOR    = QColor(140, 140, 140, 176)  # gris SFlow idle
+TOOLBAR_COLLAPSED_OFFSET_X = 40                          # px a la derecha del centro (junto a SFlow)
+TOOLBAR_COLLAPSED_MARGIN_BOTTOM = 9                      # margen desde el fondo
+SHORTCUT_COLLAPSE_TOOLBAR  = "h"                         # Ctrl+H
 
 # --- Logo ---
 LOGO_PATH = os.path.join(_ASSETS_DIR, "logo_small.png")

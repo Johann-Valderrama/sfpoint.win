@@ -10,7 +10,7 @@ Uses pynput with Qt signals (QueuedConnection required).
 
 from pynput import keyboard
 from PyQt6.QtCore import QObject, pyqtSignal
-from config import TOOL_SHORTCUTS, TOOL_LASER, SHORTCUT_HIDE_TOOLBAR, SHORTCUT_SETTINGS
+from config import TOOL_SHORTCUTS, TOOL_LASER, SHORTCUT_HIDE_TOOLBAR, SHORTCUT_SETTINGS, SHORTCUT_COLLAPSE_TOOLBAR
 
 
 class HotkeyListener(QObject):
@@ -29,6 +29,7 @@ class HotkeyListener(QObject):
     deactivated = pyqtSignal()
     laser_toggled = pyqtSignal(bool)  # independent laser on/off
     hide_toolbar = pyqtSignal()
+    collapse_toolbar = pyqtSignal()
     open_settings = pyqtSignal()
     undo_requested = pyqtSignal()
     clear_requested = pyqtSignal()
@@ -98,6 +99,11 @@ class HotkeyListener(QObject):
             return
 
         char_lower = char.lower()
+
+        # Ctrl+H = colapsar/expandir toolbar (rest mode)
+        if self._ctrl_held and char_lower == SHORTCUT_COLLAPSE_TOOLBAR:
+            self.collapse_toolbar.emit()
+            return
 
         # Alt+key shortcuts (toggle-based)
         if not self._alt_held:
