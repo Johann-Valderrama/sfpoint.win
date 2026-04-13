@@ -116,10 +116,6 @@ def main():
         lambda on: _on_laser_toggled(canvas, toolbar, on),
         Qt.ConnectionType.QueuedConnection,
     )
-    hotkey.hide_toolbar.connect(
-        toolbar.toggle_visibility,
-        Qt.ConnectionType.QueuedConnection,
-    )
     hotkey.collapse_toolbar.connect(
         toolbar.toggle_collapse,
         Qt.ConnectionType.QueuedConnection,

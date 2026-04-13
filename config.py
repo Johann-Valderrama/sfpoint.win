@@ -97,7 +97,7 @@ TOOLBAR_COLLAPSED_HEIGHT   = 12                          # igual al ancho â†’ cÃ
 TOOLBAR_COLLAPSED_COLOR    = QColor(140, 140, 140, 176)  # gris SFlow idle
 TOOLBAR_COLLAPSED_OFFSET_X = 40                          # px a la derecha del centro (junto a SFlow)
 TOOLBAR_COLLAPSED_MARGIN_BOTTOM = 9                      # margen desde el fondo
-SHORTCUT_COLLAPSE_TOOLBAR  = "h"                         # Ctrl+H
+SHORTCUT_COLLAPSE_TOOLBAR  = "h"                         # Alt+H
 
 # --- Logo ---
 LOGO_PATH = os.path.join(_ASSETS_DIR, "logo_small.png")
