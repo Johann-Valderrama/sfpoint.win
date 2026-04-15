@@ -96,7 +96,7 @@ TOOLBAR_COLLAPSED_WIDTH    = 12                          # diámetro del círcul
 TOOLBAR_COLLAPSED_HEIGHT   = 12                          # igual al ancho → círculo perfecto
 TOOLBAR_COLLAPSED_COLOR    = QColor(140, 140, 140, 176)  # gris SFlow idle
 TOOLBAR_COLLAPSED_OFFSET_X = 40                          # px a la derecha del centro (junto a SFlow)
-TOOLBAR_COLLAPSED_MARGIN_BOTTOM = 9                      # margen desde el fondo
+TOOLBAR_COLLAPSED_MARGIN_BOTTOM = 10                     # margen desde el fondo
 SHORTCUT_COLLAPSE_TOOLBAR  = "h"                         # Alt+H
 
 # --- Logo ---
